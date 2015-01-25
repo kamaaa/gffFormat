@@ -8,9 +8,13 @@
 #ifndef BMPFORMAT_H_
 #define BMPFORMAT_H_
 
-class bmpFormat {
+#include "GraphicsFormat.h"
+
+class BmpFormat: public GraphicsFormat {
 public:
-	bmpFormat();
+	BmpFormat(){
+
+	}
 };
 
 #endif /* BMPFORMAT_H_ */

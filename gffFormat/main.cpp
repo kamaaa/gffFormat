@@ -7,7 +7,6 @@
  */
 
 #include <iostream>
-#include <vector>
 #include <gtkmm-3.0/gtkmm.h>
 #include "class/Stage.h"
 

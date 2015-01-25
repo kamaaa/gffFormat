@@ -65,6 +65,12 @@ public:
 		}
 
 	}
+	int getWidth(){
+		return this->imageWidth;
+	}
+	int getHeight(){
+		return this->imageHeight;
+	}
 };
 
 #endif /* GFFFORMAT_H_ */
