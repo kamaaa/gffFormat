@@ -27,6 +27,8 @@ private:
 	string title;
 	int stageWidth;
 	int stageHeight;
+	int screenWidth;
+	int screenHeight;
 
 	Glib::RefPtr<Gtk::Application> app;
 	Gtk::Window *window;
@@ -35,8 +37,9 @@ private:
 	Gtk::Box* mainMenuBox;
 	Gtk::MenuBar* mainMenuBar;
 	Gtk::Image* checkMarkIcon;
-	Gtk::ImageMenuItem* colorSelected;
 	vector<Gtk::MenuItem*> saveItems;
+	vector<Gtk::ImageMenuItem*> colorItems;
+	unsigned short colorSelected;
 
 	DisplayObject* drawArea;
 	GffFormat gff;
@@ -52,6 +55,8 @@ public:
 		this->title = "GFF Format";
 		this->stageWidth = 600;
 		this->stageHeight = 400;
+		this->screenWidth = Gdk::screen_width();
+		this->screenHeight = Gdk::screen_height();
 
 		this->mainBox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 0));
 
@@ -59,9 +64,12 @@ public:
 		this->mainMenuBar = NULL;
 		this->mainMenuBox = NULL;
 		this->checkMarkIcon = NULL;
-		this->colorSelected = NULL;
+		this->colorSelected = 0;
 
 		this->saveItems.resize(3);
+		this->colorItems.resize(5);
+		this->mainBox->show_all();
+		this->mainBox->add(*drawArea);
 	}
 	Stage(int argc, char* argv[], string title, int width, int height){
 		this->app = Gtk::Application::create(argc, argv,"org.gtkmm.examples.base");
@@ -70,14 +78,16 @@ public:
 		this->title = title;
 		this->stageWidth = width;
 		this->stageHeight = height;
+		this->screenWidth = Gdk::screen_width();
+		this->screenHeight = Gdk::screen_height();
 
 		this->mainBox = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL, 0));
 
-		this->drawArea = new DisplayObject;
+		this->drawArea = new DisplayObject(width, height);
 		this->mainMenuBar = NULL;
 		this->mainMenuBox = NULL;
 		this->checkMarkIcon = NULL;
-		this->colorSelected = NULL;
+		this->colorSelected = 0;
 
 		this->window->set_default_size(this->stageWidth, this->stageHeight);
 		this->window->set_title(this->title);
@@ -85,8 +95,9 @@ public:
 		this->window->set_icon_from_file("icon.png");
 
 		this->saveItems.resize(3);
+		this->colorItems.resize(5);
+		this->mainBox->add(*this->drawArea);
 		this->mainBox->show_all();
-		//this->mainBox->set_size_request(this->stageWidth, this->stageHeight);
 		this->window->add(*mainBox);
 	}
 
@@ -95,6 +106,8 @@ public:
 		this->window->set_title(this->title);
 		this->window->set_position(Gtk::WIN_POS_CENTER);
 		this->window->set_icon_from_file("icon.png");
+
+		this->window->add(*this->mainBox);
 	}
 
 	int addStage(){
@@ -108,6 +121,7 @@ public:
 		this->mainMenuBar = Gtk::manage(new Gtk::MenuBar());
 
 		this->mainBox->add(*this->mainMenuBox);
+		this->mainBox->reorder_child(*this->mainMenuBox, 0);
 		this->mainMenuBox->pack_start(*this->mainMenuBar, Gtk::PACK_SHRINK, 0);
 		this->checkMarkIcon->set_halign(Gtk::ALIGN_START);
 
@@ -169,20 +183,20 @@ private:
 		Gtk::ImageMenuItem* hsvColor = Gtk::manage(new Gtk::ImageMenuItem(*hsvCheck, "_HSV", true));
 		Gtk::ImageMenuItem* yuvColor = Gtk::manage(new Gtk::ImageMenuItem(*yuvCheck, "_YUV", true));
 
-		this->colorSelected = rgbColor;
-		this->colorSelected->set_always_show_image(true);
+		this->colorItems[0] = rgbColor;
+		this->colorItems[1] = bgrColor;
+		this->colorItems[2] = hslColor;
+		this->colorItems[3] = hsvColor;
+		this->colorItems[4] = yuvColor;
 
-		rgbColor->set_label("RGB");
-		bgrColor->set_label("BGR");
-		hslColor->set_label("HSL");
-		hsvColor->set_label("HSV");
-		yuvColor->set_label("YUV");
+		this->colorSelected = ColorSettings::RGB;
+		this->setActiveMenuItem(this->colorSelected);
 
-		rgbColor->signal_activate().connect(sigc::bind <Gtk::ImageMenuItem*>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), rgbColor), false);
-		bgrColor->signal_activate().connect(sigc::bind <Gtk::ImageMenuItem*>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), bgrColor), false);
-		hslColor->signal_activate().connect(sigc::bind <Gtk::ImageMenuItem*>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), hslColor), false);
-		hsvColor->signal_activate().connect(sigc::bind <Gtk::ImageMenuItem*>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), hsvColor), false);
-		yuvColor->signal_activate().connect(sigc::bind <Gtk::ImageMenuItem*>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), yuvColor), false);
+		rgbColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), ColorSettings::RGB), false);
+		bgrColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), ColorSettings::BGR), false);
+		hslColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), ColorSettings::HSL), false);
+		hsvColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), ColorSettings::HSV), false);
+		yuvColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), ColorSettings::YUV), false);
 
 		fileSubMenu->append(*rgbColor);
 		fileSubMenu->append(*bgrColor);
@@ -209,12 +223,36 @@ private:
 		return subMenu;
 	}
 
-	void setActiveMenuItem(Gtk::ImageMenuItem* item){
-		this->colorSelected->set_always_show_image(false);
-		item->set_always_show_image(true);
-		this->colorSelected = item;
+	void setActiveMenuItem(unsigned short colorID){
+		Gtk::ImageMenuItem* currentItem = this->colorItems[this->colorSelected];
+		currentItem->set_always_show_image(false);
 
-		cout<<(string)item->get_label();
+		this->colorItems[colorID]->set_always_show_image(true);
+		this->colorSelected = colorID;
+
+		switch(colorID){
+		case(ColorSettings::RGB):{
+			cout<<"RGB"<<endl;
+			break;
+			}
+		case(ColorSettings::BGR):{
+			cout<<"BGR"<<endl;
+			break;
+			}
+		case(ColorSettings::HSL):{
+			cout<<"HSL"<<endl;
+			break;
+			}
+		case(ColorSettings::HSV):{
+			cout<<"HSV"<<endl;
+			break;
+			}
+		case(ColorSettings::YUV):{
+			cout<<"YUV"<<endl;
+			break;
+			}
+		}
+
 	}
 	void openFileEvent(){
 		Gtk::FileChooserDialog openFileDialog("Otwórz plik",Gtk::FILE_CHOOSER_ACTION_OPEN);
@@ -316,16 +354,42 @@ private:
 
 	bool bmpFileOpened(){
 		gff.loadBitmap(this->path.data());
-		drawArea->setPixels(gff.getPixels());
-		drawArea->setResolution(gff.getWidth(),gff.getHeight());
+		int imageWidth = gff.getWidth();
+		int imageHeight = gff.getHeight();
+
+		this->setActiveMenuItem(ColorSettings::BGR);
+
+		if(imageHeight > this->screenHeight){
+			this->scaleWindow(false, imageWidth, imageHeight);
+		}else if(imageHeight > this->stageHeight){
+			this->scaleWindow(true, imageWidth, imageHeight);
+		}
+
+		drawArea->setPixels(gff.getPixels(), "bmp", ColorSettings::BGR);
+		drawArea->setImageResolution(imageWidth, imageHeight);
 
 		drawArea->show();
-		this->mainBox->add(*drawArea);
-		return false;
+
+		return true;
 	}
 	bool gffFileOpened(){
 
 		return false;
+	}
+	void scaleWindow(bool adjust, int imageWidth, int imageHeight){
+		double ratio = (double)imageWidth / imageHeight;
+		int newWindowHeight = 0;
+		int newWindowWidth = 0;
+
+		if(!adjust){
+			newWindowHeight = this->screenHeight - 100;
+		}else{
+			newWindowHeight = imageHeight;
+		}
+
+		newWindowWidth = newWindowHeight * ratio;
+		this->resizeWindow(newWindowWidth, newWindowHeight);
+		drawArea->setWindowResulution(this->stageWidth, this->stageHeight);
 	}
 };
 
