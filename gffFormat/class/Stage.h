@@ -44,7 +44,9 @@ private:
 	DisplayObject* drawArea;
 	GffFormat gff;
 	BmpFormat bmp;
+	LzCompressor lz;
 	string path;
+	string format;
 
 
 public:
@@ -190,13 +192,13 @@ private:
 		this->colorItems[4] = yuvColor;
 
 		this->colorSelected = ColorSettings::RGB;
-		this->setActiveMenuItem(this->colorSelected);
+		this->setActiveColorSpace(this->colorSelected);
 
-		rgbColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), ColorSettings::RGB), false);
-		bgrColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), ColorSettings::BGR), false);
-		hslColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), ColorSettings::HSL), false);
-		hsvColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), ColorSettings::HSV), false);
-		yuvColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveMenuItem), ColorSettings::YUV), false);
+		rgbColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveColorSpace), ColorSettings::RGB), false);
+		bgrColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveColorSpace), ColorSettings::BGR), false);
+		hslColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveColorSpace), ColorSettings::HSL), false);
+		hsvColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveColorSpace), ColorSettings::HSV), false);
+		yuvColor->signal_activate().connect(sigc::bind <int>(sigc::mem_fun(*this, &Stage::setActiveColorSpace), ColorSettings::YUV), false);
 
 		fileSubMenu->append(*rgbColor);
 		fileSubMenu->append(*bgrColor);
@@ -223,7 +225,7 @@ private:
 		return subMenu;
 	}
 
-	void setActiveMenuItem(unsigned short colorID){
+	void setActiveColorSpace(unsigned short colorID){
 		Gtk::ImageMenuItem* currentItem = this->colorItems[this->colorSelected];
 		currentItem->set_always_show_image(false);
 
@@ -273,8 +275,6 @@ private:
 		//Handle the response:
 		switch(result){
 		    case(Gtk::RESPONSE_OK):{
-		        // The user selected a file
-		    	string type;
 
 		        cout << "Open clicked." << endl;
 		        this->path = openFileDialog.get_filename();
@@ -282,9 +282,9 @@ private:
 
 		        window->set_title(this->title+" - "+this->path);
 		        this->enableSaveButtons(true);
-		        type = this->path.substr(this->path.length()-3,3);
+		        this->format = this->path.substr(this->path.length()-3,3);
 
-		        if(type=="bmp"){
+		        if(this->format=="bmp"){
 		        	this->bmpFileOpened();
 		        }else{
 		        	this->gffFileOpened();
@@ -305,7 +305,12 @@ private:
 		}
 	}
 	void saveFileEvent(){
-
+		if(this->path != ""){
+			if(this->format == "gff"){
+				gff.saveGff(this->path.data());
+				cout<<"Zapisano"<<endl;
+			}
+		}
 	}
 	void saveFileAsEvent(string type){
 		Gtk::FileChooserDialog saveFileDialog("Zapisz plik jako "+type,Gtk::FILE_CHOOSER_ACTION_SAVE);
@@ -322,14 +327,16 @@ private:
 		saveFileDialog.add_filter(imgFilter);
 		int result = saveFileDialog.run();
 
+		this->format = type;
+
 				//Handle the response:
 		switch(result){
 			case(Gtk::RESPONSE_OK):{
 				// The user selected a file
 
 				cout << "Save clicked." << endl;
-				string filename = saveFileDialog.get_filename();
-				cout << "File selected: " <<  filename << endl;
+				this->path = saveFileDialog.get_filename();
+				cout << "File selected: " <<  this->path << endl;
 
 				break;
 			}
@@ -345,6 +352,7 @@ private:
 				break;
 
 		}
+		this->saveFileEvent();
 	}
 	void enableSaveButtons(bool state){
 		for(int i=0; i<(int)this->saveItems.size(); i++){
@@ -357,12 +365,15 @@ private:
 		int imageWidth = gff.getWidth();
 		int imageHeight = gff.getHeight();
 
-		this->setActiveMenuItem(ColorSettings::BGR);
+		this->setActiveColorSpace(ColorSettings::BGR);
 
 		if(imageHeight > this->screenHeight){
 			this->scaleWindow(false, imageWidth, imageHeight);
 		}else if(imageHeight > this->stageHeight){
 			this->scaleWindow(true, imageWidth, imageHeight);
+		}else{
+			drawArea->setWindowResulution(this->stageWidth, this->stageHeight);
+			drawArea->scaleImage(false);
 		}
 
 		drawArea->setPixels(gff.getPixels(), "bmp", ColorSettings::BGR);
@@ -389,6 +400,7 @@ private:
 
 		newWindowWidth = newWindowHeight * ratio;
 		this->resizeWindow(newWindowWidth, newWindowHeight);
+		drawArea->scaleImage(true);
 		drawArea->setWindowResulution(this->stageWidth, this->stageHeight);
 	}
 };

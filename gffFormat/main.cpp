@@ -13,7 +13,7 @@
 using namespace std;
 
 int main(int argc, char *argv[]){
-	Stage stage(argc, argv, "GFF Format", 600, 400);
+	Stage stage(argc, argv, "GFF Format", 700, 500);
 	stage.addMainMenu();
 
 	stage.addStage();

@@ -17,32 +17,31 @@ using namespace std;
 class LzCompressor {
 private:
 	const unsigned short DICTIONARY_SIZE = 8192;
-	const unsigned short BUFFER_SIZE = 2048;
+	const unsigned short BUFFER_SIZE = 256;
 
 	unsigned int indexStartWindow;
 	unsigned int indexEndWindow;
 
-	vector <unsigned char> bytesData;
+	vector <uint8_t> bytesData;
 	vector <uint16_t> compressData;
 
 public:
-	LzCompressor(vector<unsigned char> rowData){
+	LzCompressor(){
 		this->indexStartWindow = 0;
 		this->indexEndWindow = 0;
-		this->bytesData = rowData;
 	}
 
-	void compress(){
-
-		int matchPosition = 0;
+	vector<uint16_t> compress(vector<uint8_t> bytesData){
 		uint16_t offset = 0;
 		uint16_t matchLength = 0;
 		uint16_t currentByteValue = 0;
 
 		vector<uint16_t> pattern;
+		this->bytesData = bytesData;
 
+		int matchPosition = 0;
 		int	currentByteIndex = 0;
-		int bytesLength = this->bytesData.size();
+		int bytesLength = this->bytesData.size()-1;
 
 		while(currentByteIndex < bytesLength){
 			this->indexStartWindow = (currentByteIndex - this->DICTIONARY_SIZE >=0) ? currentByteIndex - this->DICTIONARY_SIZE : 0;
@@ -60,14 +59,13 @@ public:
 			}else{
 				pattern.push_back(currentByteValue);
 				matchPosition = this->searchPattern(this->indexStartWindow, currentByteIndex, pattern);
-				//cout<<"Wartość: "<<currentByteValue<<" Na pozycji: "<<matchPosition<<endl;
-				//cout<<matchPosition<<endl;
+
 				if(matchPosition != -1){
 					matchLength=1;
 					while(matchLength <= this->BUFFER_SIZE){
-						pattern.push_back((uint16_t)this->bytesData[currentByteIndex + matchLength]);
+						pattern.push_back(this->bytesData[currentByteIndex + matchLength]);
 						matchPosition = this->searchPattern(this->indexStartWindow, currentByteIndex, pattern);
-						if(matchPosition != -1 && currentByteIndex + matchLength < bytesLength /*&& (matchPosition + matchLength) < currentByteIndex*/){
+						if(matchPosition != -1 && currentByteIndex + matchLength < bytesLength){
 							matchLength++;
 						}else{
 							pattern.pop_back();
@@ -75,10 +73,10 @@ public:
 						}
 					}
 					matchPosition = this->searchPattern(this->indexStartWindow, currentByteIndex, pattern)-1;
-					//cout<<"Match len:"<<matchLength<<endl;
 
 					currentByteIndex += matchLength;
-					offset = currentByteIndex - matchPosition - matchLength;
+					offset = (currentByteIndex < (this->DICTIONARY_SIZE + matchLength)) ? currentByteIndex - matchPosition - matchLength : this->DICTIONARY_SIZE - matchLength;
+
 					this->addCompressItem(offset, matchLength, this->bytesData[currentByteIndex]);
 
 				}else{
@@ -88,13 +86,43 @@ public:
 
 			currentByteIndex++;
 		}
-	}
-	vector<unsigned char> unCompress(vector<unsigned char>bytes){
-		vector<unsigned char> result;
 
-		return result;
+		return this->compressData;
 	}
-	void readCompress(){
+	vector<uint8_t> unCompress(){
+		vector<uint8_t> rawData;
+
+		unsigned int sizeCompresedData = this->compressData.size();
+		unsigned int currentItemIndex = 0;
+		unsigned short matchLength = 0;
+		unsigned short offset = 0;
+
+		while(currentItemIndex < sizeCompresedData){
+			if(this->compressData[currentItemIndex+1] == 0){
+				rawData.push_back(this->compressData[currentItemIndex+2]);
+				currentItemIndex+=3;
+			}else{
+				matchLength = this->compressData[currentItemIndex+1];
+				offset = rawData.size() - this->compressData[currentItemIndex];
+
+				for(int i=0; i<matchLength; i++){
+					rawData.push_back(rawData[offset]);
+					offset++;
+				}
+				rawData.push_back(this->compressData[currentItemIndex+2]);
+				currentItemIndex+=3;
+			}
+		}
+
+		return rawData;
+	}
+
+	void clear(){
+		this->bytesData.clear();
+		this->compressData.clear();
+	}
+
+	void readCompressData(){
 		int size = this->compressData.size();
 		cout<<"Compressed size:"<<size<<endl;
 		for(int i = 0; i<size; i+=3){

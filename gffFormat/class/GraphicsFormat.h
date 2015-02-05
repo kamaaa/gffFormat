@@ -20,16 +20,24 @@
 class GraphicsFormat {
 
 protected:
-	short bitsPerPixel;
+	uint8_t bitsPerPixel;
 	uint32_t pixelOffset;
 
-	int imageSize;
-	int imageWidth;
-	int imageHeight;
+	unsigned int pixelDataSize;
+	uint32_t fileSize;
+	uint32_t headerSize;
+	uint32_t imageSize;
+	uint32_t imageWidth;
+	uint32_t imageHeight;
+
+	const char* colorSpace;
+	const char* typeCompression;
 
 	std::vector<uint8_t> fileHeader;
-	std::vector<unsigned char> pixelsData;
+	std::vector<uint8_t> pixelsData;
+	std::vector<uint16_t> compressData;
 	std::ifstream image;
+	std::ofstream saveImage;
 
 private:
 
@@ -44,36 +52,45 @@ protected:
 	 *
 	 * Arguments: source - path to file, headerLength - number of bits header
 	 * Throws: invalid_argument
-	 * Return: vector - row file header
+	 * Return: vector - raw file header
 	 */
 	std::vector<uint8_t> loadHeader(const char* source, int headerLength){
-		std::vector<uint8_t> rowData;
+		std::vector<uint8_t> rawData;
 
 		this->image.open(source, std::ios::in | std::ios::binary);
 		if(!this->image.is_open()){
 			throw std::invalid_argument("Nie ma takiego pliku");
 		}
 
-		rowData.resize(headerLength);
-		this->image.read(reinterpret_cast<char*>(rowData.data()),headerLength);
+		rawData.resize(headerLength);
+		this->image.read(reinterpret_cast<char*>(rawData.data()),headerLength);
 
-		return rowData;
+		return rawData;
 	}
 
-	std::vector<unsigned char> loadPixels(int size, int offset){
-		std::vector<unsigned char> rowData;
+	std::vector<uint8_t> loadPixels(int size, int offset){
+		std::vector<uint8_t> rawData;
 
 		if(!this->image.is_open()){
 			throw std::runtime_error("Plik nie zostal otwarty.");
 		}
 
-		rowData.resize(size);
+		rawData.resize(size);
 
 		this->image.seekg(offset, std::ios::beg);
-		this->image.read(reinterpret_cast<char*>(rowData.data()),size);
+		this->image.read(reinterpret_cast<char*>(rawData.data()),size);
 
 		this->closeImage();
-		return rowData;
+		return rawData;
+	}
+
+	void saveFile(const char* path){
+		this->saveImage.open(path, std::ios::binary);
+
+		this->saveImage.write(reinterpret_cast<char*>(this->fileHeader.data()),this->headerSize);
+		this->saveImage.write(reinterpret_cast<char*>(this->compressData.data()),this->fileSize);
+
+		this->saveImage.close();
 	}
 
 	void closeImage(){
