@@ -16,6 +16,7 @@
 #include <iostream>
 #include <string>
 #include "ColorSettings.h"
+#include "LzCompressor.h"
 
 using namespace std;
 
@@ -26,9 +27,10 @@ protected:
 	int imageHeight;
 	int stageWidth;
 	int stageHeight;
+	bool scale;
 
 	string imageFormat;
-	vector<unsigned char> pixels;
+	vector<uint8_t> pixels;
 
 public:
 	DisplayObject(){
@@ -37,6 +39,7 @@ public:
 		this->stageWidth=0;
 		this->stageHeight=0;
 		this->imageFormat = "";
+		this->scale = true;
 	}
 	DisplayObject(int stageWidth, int stageHeight){
 		this->stageWidth=stageWidth;
@@ -44,8 +47,9 @@ public:
 		this->imageWidth=0;
 		this->imageHeight=0;
 		this->imageFormat = "";
-
+		this->scale = true;
 	}
+
 	void setImageResolution(int width, int height){
 		this->imageWidth = width;
 		this->imageHeight = height;
@@ -55,8 +59,14 @@ public:
 		this->stageHeight = height;
 		this->set_size_request(width, height);
 	}
-	void setPixels(vector<unsigned char> arrayPixel, string type, unsigned short colorSpace){
+
+	void scaleImage(bool scaleMode){
+		this->scale = scaleMode;
+	}
+
+	void setPixels(vector<uint8_t> arrayPixel, string type, unsigned short colorSpace){
 		this->pixels = arrayPixel;
+		cout<<this->pixels.size()<<endl;
 		this->imageFormat = type;
 
 		switch(colorSpace){
@@ -74,19 +84,32 @@ public:
 
 protected:
 	virtual bool on_draw(const Cairo::RefPtr<Cairo::Context> &cr){
+		double x=0;
+		double y=0;
 
 		if(this->pixels.size() == 0 || this->imageWidth == 0 || this->imageHeight == 0){
 			return false;
 		}
 
-		image = Gdk::Pixbuf::create_from_data(this->pixels.data(),Gdk::COLORSPACE_RGB, false, 8, this->imageWidth,this->imageHeight,this->imageWidth*3);
+		this->image = Gdk::Pixbuf::create_from_data(this->pixels.data(),Gdk::COLORSPACE_RGB, false, 8, this->imageWidth,this->imageHeight,this->imageWidth*3);
+
 		if(this->imageFormat == "bmp"){
-			image = image->flip(false);
+			this->image = this->image->flip(false);
 		}
 
-		cr->scale((double)this->stageWidth/image->get_width(),(double)this->stageHeight/image->get_height());
-		Gdk::Cairo::set_source_pixbuf(cr, image, 0,0);
-		cr->rectangle(0,0,image->get_width(),image->get_height());
+		if(this->scale){
+			cr->scale((double)this->stageWidth/this->image->get_width(),(double)this->stageHeight/this->image->get_height());
+
+			Gdk::Cairo::set_source_pixbuf(cr, this->image, 0,0);
+			cr->rectangle(0,0,this->image->get_width(),this->image->get_height());
+		}else{
+			x = (double)this->stageWidth/2 - this->image->get_width()/2;
+			y = (double)this->stageHeight/2 - this->image->get_height()/2;
+
+			Gdk::Cairo::set_source_pixbuf(cr, this->image, x,y);
+			cr->rectangle(x,y,this->image->get_width(),this->image->get_height());
+		}
+
 		cr->fill();
 
 		return true;
