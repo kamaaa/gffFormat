@@ -305,11 +305,14 @@ private:
 		}
 	}
 	void saveFileEvent(){
-		if(this->path != ""){
-			if(this->format == "gff"){
-				gff.saveGff(this->path.data());
-				cout<<"Zapisano"<<endl;
-			}
+		cout<<"save..."<<endl;
+		if(this->path == ""){
+			cout<<"no path"<<endl;
+			return;
+		}
+		if(this->format == "gff"){
+			gff.saveGff(this->path.data());
+			cout<<"Zapisano"<<endl;
 		}
 	}
 	void saveFileAsEvent(string type){
@@ -327,15 +330,17 @@ private:
 		saveFileDialog.add_filter(imgFilter);
 		int result = saveFileDialog.run();
 
-		this->format = type;
-
-				//Handle the response:
 		switch(result){
 			case(Gtk::RESPONSE_OK):{
 				// The user selected a file
-
 				cout << "Save clicked." << endl;
 				this->path = saveFileDialog.get_filename();
+				this->format = this->path.substr(this->path.length()-3,3);
+
+				if(this->format != type){
+					this->format = "gff";
+					this->path += "." + type;
+				}
 				cout << "File selected: " <<  this->path << endl;
 
 				break;
@@ -352,6 +357,7 @@ private:
 				break;
 
 		}
+
 		this->saveFileEvent();
 	}
 	void enableSaveButtons(bool state){
@@ -384,6 +390,35 @@ private:
 		return true;
 	}
 	bool gffFileOpened(){
+		bmp.loadGff(this->path.data());
+		int imageWidth = bmp.getWidth();
+		int imageHeight = bmp.getHeight();
+
+		string colorspace = bmp.getColorspace();
+
+		if(colorspace == "HSL"){
+			this->setActiveColorSpace(ColorSettings::HSL);
+		}else if(colorspace == "HSV"){
+			this->setActiveColorSpace(ColorSettings::HSV);
+		}else if(colorspace == "YUV"){
+			this->setActiveColorSpace(ColorSettings::YUV);
+		}else{
+			this->setActiveColorSpace(ColorSettings::RGB);
+		}
+
+		if(imageHeight > this->screenHeight){
+			this->scaleWindow(false, imageWidth, imageHeight);
+		}else if(imageHeight > this->stageHeight){
+			this->scaleWindow(true, imageWidth, imageHeight);
+		}else{
+			drawArea->setWindowResulution(this->stageWidth, this->stageHeight);
+			drawArea->scaleImage(false);
+		}
+
+		drawArea->setPixels(bmp.getPixels(), "gff", this->colorSelected);
+		drawArea->setImageResolution(imageWidth, imageHeight);
+
+		drawArea->show();
 
 		return false;
 	}

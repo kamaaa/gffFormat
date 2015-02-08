@@ -7,12 +7,14 @@
  */
 
 #include <iostream>
+#include <bitset>
 #include <gtkmm-3.0/gtkmm.h>
 #include "class/Stage.h"
 
 using namespace std;
 
 int main(int argc, char *argv[]){
+
 	Stage stage(argc, argv, "GFF Format", 700, 500);
 	stage.addMainMenu();
 

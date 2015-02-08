@@ -16,6 +16,7 @@
 #include <iostream>
 #include <stdint.h>
 #include <fstream>
+#include "LzCompressor.h"
 
 class GraphicsFormat {
 
@@ -30,20 +31,30 @@ protected:
 	uint32_t imageWidth;
 	uint32_t imageHeight;
 
-	const char* colorSpace;
-	const char* typeCompression;
+	std::string colorSpace;
+	std::string typeCompression;
 
 	std::vector<uint8_t> fileHeader;
 	std::vector<uint8_t> pixelsData;
-	std::vector<uint16_t> compressData;
 	std::ifstream image;
 	std::ofstream saveImage;
+
+	LzCompressor lz;
 
 private:
 
 public:
 	std::vector<unsigned char> getPixels(){
 		return this->pixelsData;
+	}
+	std::string getColorspace(){
+		return this->colorSpace;
+	}
+	int getWidth(){
+		return this->imageWidth;
+	}
+	int getHeight(){
+		return this->imageHeight;
 	}
 
 protected:
@@ -84,12 +95,28 @@ protected:
 		return rawData;
 	}
 
+	void compressData(){
+		this->pixelsData = lz.compress(this->pixelsData);
+		lz.clear();
+	}
+
+	void decompressData(){
+		this->pixelsData = lz.decompress(this->pixelsData);
+		lz.clear();
+	}
+
 	void saveFile(const char* path){
 		this->saveImage.open(path, std::ios::binary);
 
-		this->saveImage.write(reinterpret_cast<char*>(this->fileHeader.data()),this->headerSize);
-		this->saveImage.write(reinterpret_cast<char*>(this->compressData.data()),this->fileSize);
+		cout<<(int)this->imageSize<<endl;
+		this->saveImage.write(reinterpret_cast<char*>(this->fileHeader.data()), (int)this->headerSize);
+		this->saveImage.write(reinterpret_cast<char*>(this->pixelsData.data()), (int)this->imageSize);
 
+		if(this->saveImage.good()){
+			cout<<"ok"<<endl;
+		}else{
+			cout<<"nie ok"<<endl;
+		}
 		this->saveImage.close();
 	}
 
