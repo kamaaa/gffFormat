@@ -1,0 +1,10 @@
+GFF Format v1.0
+
+[1] Problemy z ładowaniem niektórych danych binarnych
+Niektóre pliki bmp nie są załadowane poprawnie co widać na podglądzie obrazów w programie,
+problemy zostały napotkane w przypadku ładowania zdjęć o rozdzielczości 30x30, 31x31,29x29
+i 25x5
+
+[2] Problemy kompresora lub dekompresora
+W wiekszości przypadkach wczytane pliki skompresowane algorytmem LZ77 nie mogą zostać poprawie odtworzone 
+po kilkuset pixelach, problem może być powiązany z [1]
