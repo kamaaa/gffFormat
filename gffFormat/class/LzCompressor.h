@@ -59,12 +59,13 @@ public:
 				this->addCompressItem(0,0,currentByteValue);
 			}else{
 				pattern.push_back(currentByteValue);
-
+				//matchPosition = this->searchPattern(this->indexStartWindow, currentByteIndex, pattern);
 				matchPosition = this->findLastPosition(this->indexStartWindow, currentByteIndex, pattern);
 				if(matchPosition != -1){
 					matchLength = 1;
 					while(matchLength < this->BUFFER_SIZE){
 						pattern.push_back(this->bytesData[currentByteIndex + matchLength]);
+						//matchPosition = this->searchPattern(this->indexStartWindow, currentByteIndex, pattern);
 						matchPosition = this->findLastPosition(this->indexStartWindow, currentByteIndex, pattern);
 						if(matchPosition != -1 && (currentByteIndex + matchLength) < bytesLength){
 							matchLength++;
@@ -73,7 +74,7 @@ public:
 							break;
 						}
 					}
-
+					//matchPosition = this->searchPattern(this->indexStartWindow, currentByteIndex, pattern)-1;
 					matchPosition = this->findLastPosition(this->indexStartWindow, currentByteIndex, pattern);
 					currentByteIndex += matchLength;
 					offset = (currentByteIndex < (this->DICTIONARY_SIZE + matchLength)) ? currentByteIndex - matchPosition - matchLength : this->DICTIONARY_SIZE - matchLength;
@@ -93,26 +94,27 @@ public:
 		vector<uint8_t> rawData;
 		this->compressData = compressData;
 
-		unsigned int sizeCompresedData = compressData.size();
+		unsigned int sizeCompresedData = compressData.size()-1;
 		unsigned int currentItemIndex = 0;
-		unsigned short matchLength = 0;
-		unsigned short offset = 0;
+		unsigned int matchLength = 0;
+		//unsigned int offset = 0;
 
 		while(currentItemIndex < sizeCompresedData){
-			if(compressData[currentItemIndex+1] == 0){
-				rawData.push_back(compressData[currentItemIndex+2]);
-				currentItemIndex+=3;
-			}else{
-				matchLength = compressData[currentItemIndex+1];
-				offset = rawData.size() - compressData[currentItemIndex];
+			if(this->compressData[currentItemIndex+1] == 0){
+				rawData.push_back(this->compressData[currentItemIndex+2]);
 
-				for(int i=0; i<matchLength; i++){
-					rawData.push_back(rawData[offset]);
-					offset++;
+			}else{
+				matchLength = this->compressData[currentItemIndex+1];
+				//offset = rawData.size() - this->compressData[currentItemIndex];
+
+				for(unsigned int i=0; i<matchLength; i++){
+					rawData.push_back(rawData[rawData.size() - this->compressData[currentItemIndex]]);
+					//offset++;
 				}
 				rawData.push_back(this->compressData[currentItemIndex+2]);
-				currentItemIndex+=3;
+				//currentItemIndex+=3;
 			}
+			currentItemIndex+=3;
 		}
 
 		return rawData;
@@ -155,8 +157,9 @@ private:
 		pattern.insert(pattern.begin(),0);
 		pattern.push_back(0);
 
-		//search.reserve(this->dictionary.size() + patternSize);
-		search.insert(search.begin(), pattern.begin(),pattern.end());
+		search.reserve((end-start) + patternSize);
+		search.insert(search.end(), pattern.begin(),pattern.end());
+		search.insert(search.begin(), this->bytesData.begin()+start,this->bytesData.begin()+end);
 
 		searchSize = search.size();
 		match.resize(searchSize+1, 0);
@@ -171,13 +174,18 @@ private:
 			}
 			match[i] = t;
 		}
+		for(i = patternSize + 2; i < searchSize; i++){
+			if( match[i] == patternSize ){
+				position = (i-patternSize-patternSize);
 
-		for(i = searchSize-1; i > patternSize+2; i--){
+			}
+		}
+		/*for(i = searchSize-1; i > patternSize+2; i--){
 			if( match[i] == patternSize ){
 				position = (i-patternSize-patternSize);
 				break;
 			}
-		}
+		}*/
 		//cout<<"position: "<<position<<endl;
 		return position;
 	}

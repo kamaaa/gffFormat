@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <fstream>
 #include "LzCompressor.h"
+#include <algorithm>
 
 class GraphicsFormat {
 
@@ -34,8 +35,10 @@ protected:
 	std::string colorSpace;
 	std::string typeCompression;
 
-	std::vector<uint8_t> fileHeader;
-	std::vector<uint8_t> pixelsData;
+	std::vector<unsigned char> fileHeader;
+	std::vector<unsigned char> pixelsData;
+	unsigned char* header;
+	unsigned char* pixels;
 	std::ifstream image;
 	std::ofstream saveImage;
 
@@ -65,10 +68,11 @@ protected:
 	 * Throws: invalid_argument
 	 * Return: vector - raw file header
 	 */
-	std::vector<uint8_t> loadHeader(const char* source, int headerLength){
-		std::vector<uint8_t> rawData;
+	std::vector<unsigned char> loadHeader(const char* source, int headerLength){
+		std::vector<unsigned char> rawData;
 
 		this->image.open(source, std::ios::in | std::ios::binary);
+
 		if(!this->image.is_open()){
 			throw std::invalid_argument("Nie ma takiego pliku");
 		}
@@ -79,8 +83,8 @@ protected:
 		return rawData;
 	}
 
-	std::vector<uint8_t> loadPixels(int size, int offset){
-		std::vector<uint8_t> rawData;
+	std::vector<unsigned char> loadPixels(int size, int offset){
+		std::vector<unsigned char> rawData;
 
 		if(!this->image.is_open()){
 			throw std::runtime_error("Plik nie zostal otwarty.");

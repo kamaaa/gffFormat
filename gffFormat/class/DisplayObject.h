@@ -92,10 +92,7 @@ protected:
 		}
 
 		this->image = Gdk::Pixbuf::create_from_data(this->pixels.data(),Gdk::COLORSPACE_RGB, false, 8, this->imageWidth,this->imageHeight,this->imageWidth*3);
-
-		if(this->imageFormat == "bmp"){
-			this->image = this->image->flip(false);
-		}
+		this->image = this->image->flip(false);
 
 		if(this->scale){
 			cr->scale((double)this->stageWidth/this->image->get_width(),(double)this->stageHeight/this->image->get_height());

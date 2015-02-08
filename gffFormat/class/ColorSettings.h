@@ -18,11 +18,6 @@ public:
 	static const short HSV = 3;
 	static const short YUV = 4;
 
-	// tylko fromHSVtoRGB * 1000
-	// fromRGBtoHSL * 100
-	// fromRGBtoHSV  wyniki zawyzone * 1000
-	// nie dziala, powinno byc (0, 218, 0)
-	// http://www.mikekohn.net/file_formats/yuv_rgb_converter.php
 
 	ColorSettings(){
 
@@ -286,6 +281,7 @@ public:
 	               cout << result[j] << "; ";
 	            }
 	        }
+	        return result;
 	    }
 
 	vector <uint16_t> fromHSVtoHSL(vector <uint16_t> pixel){

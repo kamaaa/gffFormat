@@ -71,8 +71,9 @@ public:
 	void saveGff(const char* path){
 		cout<<"swap color"<<endl;
 		this->pixelsData = ColorSettings::swapRedBlue(this->pixelsData);
-		/*for(int i=0; i<(int)this->pixelsData.size(); i++){
-			cout << "<" <<(int) this->pixelsData[i]<<","<<(int)this->pixelsData[i+1]<<","<<(int)this->pixelsData[i+2]<<">"<<endl;
+		//reverse(this->pixelsData.begin(),this->pixelsData.end());
+		/*for(int i=0; i<(int)this->pixelsData.size(); i+=3){
+			cout << "(" <<(int) this->pixelsData[i]<<","<<(int)this->pixelsData[i+1]<<","<<(int)this->pixelsData[i+2]<<")"<<endl;
 		}*/
 
 		cout<<"compress data"<<endl;
@@ -157,6 +158,11 @@ public:
 	void setColorspace(string colorspace){
 		this->colorSpace = colorspace;
 	}
+
+	/*void reverseImage(){
+		int width = (int)this->imageWidth * 3;
+
+	}*/
 };
 
 #endif /* GFFFORMAT_H_ */
