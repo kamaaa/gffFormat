@@ -35,10 +35,8 @@ protected:
 	std::string colorSpace;
 	std::string typeCompression;
 
-	std::vector<unsigned char> fileHeader;
-	std::vector<unsigned char> pixelsData;
-	unsigned char* header;
-	unsigned char* pixels;
+	std::vector<uint8_t> fileHeader;
+	std::vector<uint8_t> pixelsData;
 	std::ifstream image;
 	std::ofstream saveImage;
 
@@ -47,7 +45,7 @@ protected:
 private:
 
 public:
-	std::vector<unsigned char> getPixels(){
+	std::vector<uint8_t> getPixels(){
 		return this->pixelsData;
 	}
 	std::string getColorspace(){
@@ -68,8 +66,8 @@ protected:
 	 * Throws: invalid_argument
 	 * Return: vector - raw file header
 	 */
-	std::vector<unsigned char> loadHeader(const char* source, int headerLength){
-		std::vector<unsigned char> rawData;
+	std::vector<uint8_t> loadHeader(const char* source, int headerLength){
+		std::vector<uint8_t> rawData;
 
 		this->image.open(source, std::ios::in | std::ios::binary);
 
@@ -83,8 +81,8 @@ protected:
 		return rawData;
 	}
 
-	std::vector<unsigned char> loadPixels(int size, int offset){
-		std::vector<unsigned char> rawData;
+	std::vector<uint8_t> loadPixels(int size, int offset){
+		std::vector<uint8_t> rawData;
 
 		if(!this->image.is_open()){
 			throw std::runtime_error("Plik nie zostal otwarty.");

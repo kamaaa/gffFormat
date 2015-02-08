@@ -59,13 +59,13 @@ public:
 				this->addCompressItem(0,0,currentByteValue);
 			}else{
 				pattern.push_back(currentByteValue);
-				//matchPosition = this->searchPattern(this->indexStartWindow, currentByteIndex, pattern);
+
 				matchPosition = this->findLastPosition(this->indexStartWindow, currentByteIndex, pattern);
 				if(matchPosition != -1){
 					matchLength = 1;
 					while(matchLength < this->BUFFER_SIZE){
 						pattern.push_back(this->bytesData[currentByteIndex + matchLength]);
-						//matchPosition = this->searchPattern(this->indexStartWindow, currentByteIndex, pattern);
+
 						matchPosition = this->findLastPosition(this->indexStartWindow, currentByteIndex, pattern);
 						if(matchPosition != -1 && (currentByteIndex + matchLength) < bytesLength){
 							matchLength++;
@@ -74,7 +74,7 @@ public:
 							break;
 						}
 					}
-					//matchPosition = this->searchPattern(this->indexStartWindow, currentByteIndex, pattern)-1;
+
 					matchPosition = this->findLastPosition(this->indexStartWindow, currentByteIndex, pattern);
 					currentByteIndex += matchLength;
 					offset = (currentByteIndex < (this->DICTIONARY_SIZE + matchLength)) ? currentByteIndex - matchPosition - matchLength : this->DICTIONARY_SIZE - matchLength;
@@ -97,7 +97,7 @@ public:
 		unsigned int sizeCompresedData = compressData.size()-1;
 		unsigned int currentItemIndex = 0;
 		unsigned int matchLength = 0;
-		//unsigned int offset = 0;
+		unsigned int offset = 0;
 
 		while(currentItemIndex < sizeCompresedData){
 			if(this->compressData[currentItemIndex+1] == 0){
@@ -105,14 +105,13 @@ public:
 
 			}else{
 				matchLength = this->compressData[currentItemIndex+1];
-				//offset = rawData.size() - this->compressData[currentItemIndex];
+				offset = rawData.size() - this->compressData[currentItemIndex];
 
 				for(unsigned int i=0; i<matchLength; i++){
-					rawData.push_back(rawData[rawData.size() - this->compressData[currentItemIndex]]);
-					//offset++;
+					rawData.push_back(rawData[offset]);
+					offset++;
 				}
 				rawData.push_back(this->compressData[currentItemIndex+2]);
-				//currentItemIndex+=3;
 			}
 			currentItemIndex+=3;
 		}

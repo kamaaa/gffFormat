@@ -217,8 +217,6 @@ public:
 	            for(int j = 0; j<3; j++){
 	               cout << result[j] << "; ";
 	            }
-	        // nie dziala, powinno byc (0, 218, 0)
-	        // http://www.mikekohn.net/file_formats/yuv_rgb_converter.php
 	        }
 	    return result;
 	    }
