@@ -1,7 +1,7 @@
 GFF Format v1.0
 
-[1] Problemy z ładowaniem niektórych danych binarnych
-Niektóre pliki bmp nie są załadowane poprawnie co widać na podglądzie obrazów w programie,
+[1] Problemy z renderowaniem niektórych obrazków
+Niektóre pliki bmp nie są renderowane poprawnie co widać na podglądzie obrazów w programie,
 problemy zostały napotkane w przypadku ładowania zdjęć o rozdzielczości 30x30, 31x31,29x29
 i 25x5
 
