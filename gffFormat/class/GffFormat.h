@@ -74,9 +74,6 @@ public:
 
 		cout<<"compress data"<<endl;
 		this->compressData();
-		for(int i=0; i<(int)this->pixelsData.size(); i+=3){
-			cout << "<" <<(int) this->pixelsData[i]<<","<<(int)this->pixelsData[i+1]<<","<<(int)this->pixelsData[i+2]<<">"<<endl;
-		}
 		cout<<"create header"<<endl;
 		this->createGffHeader();
 		cout<<"save file"<<endl;

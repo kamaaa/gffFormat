@@ -53,15 +53,7 @@ public:
 			cout<<(int)this->pixelOffset<<endl;
 			cout<<(int)this->pixelDataSize<<endl;
 
-			this->pixelsData =this->loadPixels(this->pixelDataSize, this->pixelOffset);
-			for(int i=0; i<(int)this->pixelsData.size(); i+=3){
-				cout<<"<"<<(int)this->pixelsData[i]<<","<<(int)this->pixelsData[i+1]<<","<<(int)this->pixelsData[i+2]<<">"<<endl;
-			}
-			//this->pixelsData = lz.decompress(this->loadPixels(this->pixelDataSize,this->pixelOffset));
-			this->pixelsData = lz.decompress(this->pixelsData);
-			for(int i=0; i<(int)this->pixelsData.size(); i+=3){
-				cout<<"("<<(int)this->pixelsData[i]<<","<<(int)this->pixelsData[i+1]<<","<<(int)this->pixelsData[i+2]<<")"<<endl;
-			}
+			this->pixelsData = lz.decompress(this->loadPixels(this->pixelDataSize,this->pixelOffset));
 
 		}catch(std::invalid_argument& e){
 			this->closeImage();

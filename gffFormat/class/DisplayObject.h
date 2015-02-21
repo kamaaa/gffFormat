@@ -84,6 +84,7 @@ public:
 
 protected:
 	virtual bool on_draw(const Cairo::RefPtr<Cairo::Context> &cr){
+		int rowStride = 0;
 		double x=0;
 		double y=0;
 
@@ -91,7 +92,17 @@ protected:
 			return false;
 		}
 
-		this->image = Gdk::Pixbuf::create_from_data(this->pixels.data(),Gdk::COLORSPACE_RGB, false, 8, this->imageWidth,this->imageHeight,this->imageWidth*3);
+		rowStride = this->imageWidth*3;
+		rowStride += (this->imageWidth % 4);
+
+		this->image = Gdk::Pixbuf::create_from_data(this->pixels.data(),Gdk::COLORSPACE_RGB, false, 8, this->imageWidth,this->imageHeight,rowStride);
+
+		/*cout<<"colorspace:"<<this->image->get_colorspace()<<endl;
+		cout<<"alpha:"<<this->image->get_has_alpha()<<endl;
+		cout<<"bits_per:"<<this->image->get_bits_per_sample()<<endl;
+		cout<<"width:"<<this->image->get_width()<<endl;
+		cout<<"height:"<<this->image->get_height()<<endl;
+		cout<<"row:"<<this->image->get_rowstride()<<endl;*/
 		this->image = this->image->flip(false);
 
 		if(this->scale){

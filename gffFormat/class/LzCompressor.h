@@ -17,11 +17,10 @@ using namespace std;
 
 class LzCompressor {
 private:
-	const unsigned short DICTIONARY_SIZE = 8192;
+	const unsigned short DICTIONARY_SIZE = 8191;
 	const unsigned short BUFFER_SIZE = 255;
 
 	unsigned int indexStartWindow;
-	unsigned int indexEndWindow;
 
 	vector <uint8_t> bytesData;
 	vector <uint8_t> compressData;
@@ -29,7 +28,6 @@ private:
 public:
 	LzCompressor(){
 		this->indexStartWindow = 0;
-		this->indexEndWindow = 0;
 	}
 
 	vector<uint8_t> compress(vector<uint8_t> bytesData){
@@ -46,45 +44,45 @@ public:
 
 		while(currentByteIndex < bytesLength){
 			this->indexStartWindow = (currentByteIndex - this->DICTIONARY_SIZE >0) ? currentByteIndex - this->DICTIONARY_SIZE : 0;
-			//this->indexEndWindow = (currentByteIndex + this->BUFFER_SIZE < bytesLength) ? currentByteIndex + this->BUFFER_SIZE < bytesLength : bytesLength;
+
 			matchLength = 0;
 			offset = 0;
-
-			pattern.clear();
 
 			// catch the color int value
 			currentByteValue = this->bytesData[currentByteIndex];
 
 			if(currentByteIndex == 0){
 				this->addCompressItem(0,0,currentByteValue);
+				//cout<<"<"<<(int)offset<<","<< (int)matchLength<<","<< (int)this->bytesData[currentByteIndex]<<">"<<endl;
 			}else{
-				pattern.push_back(currentByteValue);
-
-				matchPosition = this->findLastPosition(this->indexStartWindow, currentByteIndex, pattern);
+				matchLength=1;
+				matchPosition = this->findLastPosition(this->indexStartWindow, currentByteIndex, matchLength);
+				//cout<<"matchPosition: "<<matchPosition<<endl;
 				if(matchPosition != -1){
-					matchLength = 1;
+					matchLength++;
 					while(matchLength < this->BUFFER_SIZE){
-						pattern.push_back(this->bytesData[currentByteIndex + matchLength]);
-
-						matchPosition = this->findLastPosition(this->indexStartWindow, currentByteIndex, pattern);
+						matchPosition = this->findLastPosition(this->indexStartWindow, currentByteIndex, matchLength);
 						if(matchPosition != -1 && (currentByteIndex + matchLength) < bytesLength){
 							matchLength++;
 						}else{
-							pattern.pop_back();
 							break;
 						}
 					}
+					matchLength--;
 
-					matchPosition = this->findLastPosition(this->indexStartWindow, currentByteIndex, pattern);
+					matchPosition = this->findLastPosition(this->indexStartWindow, currentByteIndex, matchLength);
 					currentByteIndex += matchLength;
-					offset = (currentByteIndex < (this->DICTIONARY_SIZE + matchLength)) ? currentByteIndex - matchPosition - matchLength : this->DICTIONARY_SIZE - matchLength;
-
+					offset = (currentByteIndex < (this->DICTIONARY_SIZE + matchLength)) ? currentByteIndex - matchPosition - matchLength : this->DICTIONARY_SIZE - matchPosition;
+					//cout<<"<"<<(int)offset<<","<< (int)matchLength<<","<< (int)this->bytesData[currentByteIndex]<<">"<<endl;
 					this->addCompressItem(offset, matchLength, this->bytesData[currentByteIndex]);
 				}else{
+					matchLength = 0;
+					offset=0;
 					this->addCompressItem(0,0,currentByteValue);
+					//cout<<"<"<<(int)offset<<","<< (int)matchLength<<","<< (int)this->bytesData[currentByteIndex]<<">"<<endl;
 				}
 			}
-
+			//cout<<"<"<<(int)offset<<","<< (int)matchLength<<","<< (int)this->bytesData[currentByteIndex]<<">"<<endl;
 			currentByteIndex++;
 		}
 
@@ -100,17 +98,16 @@ public:
 		unsigned int offset = 0;
 
 		while(currentItemIndex < sizeCompresedData){
-			if(this->compressData[currentItemIndex+1] == 0){
-				rawData.push_back(this->compressData[currentItemIndex+2]);
-
-			}else{
-				matchLength = this->compressData[currentItemIndex+1];
-				offset = rawData.size() - this->compressData[currentItemIndex];
+			if(this->compressData[currentItemIndex+1] > 0){
+				matchLength = (int)this->compressData[currentItemIndex+1];
+				offset = rawData.size() - (int)this->compressData[currentItemIndex];
 
 				for(unsigned int i=0; i<matchLength; i++){
 					rawData.push_back(rawData[offset]);
 					offset++;
 				}
+				rawData.push_back(this->compressData[currentItemIndex+2]);
+			}else{
 				rawData.push_back(this->compressData[currentItemIndex+2]);
 			}
 			currentItemIndex+=3;
@@ -133,14 +130,15 @@ public:
 	}
 
 private:
-	int findLastPosition(int start, int end, vector<uint8_t> pattern){
+	int findLastPosition(int start, int end, int patternLength){
 		int position = -1;
 		vector<uint8_t>::iterator it;
-		it = find_end(this->bytesData.begin()+start,this->bytesData.begin()+end, pattern.begin(), pattern.end());
+		it = find_end(this->bytesData.begin()+start,this->bytesData.begin()+end, this->bytesData.begin()+end, this->bytesData.begin()+(end+patternLength));
 
 		if(it != this->bytesData.begin()+end){
-			position = it - (this->bytesData.begin()+start);
+			position = it - (this->bytesData.begin()-start);
 		}
+
 		return position;
 	}
 	int searchPattern(int start, int end, vector<uint8_t> pattern){

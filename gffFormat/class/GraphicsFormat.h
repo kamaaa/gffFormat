@@ -36,7 +36,7 @@ protected:
 	std::string typeCompression;
 
 	std::vector<uint8_t> fileHeader;
-	std::vector<uint8_t> pixelsData;
+	std::vector<unsigned char> pixelsData;
 	std::ifstream image;
 	std::ofstream saveImage;
 
@@ -117,7 +117,7 @@ protected:
 		if(this->saveImage.good()){
 			cout<<"ok"<<endl;
 		}else{
-			cout<<"nie ok"<<endl;
+			cout<<"nie zapisano"<<endl;
 		}
 		this->saveImage.close();
 	}

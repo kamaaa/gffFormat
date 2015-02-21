@@ -10,6 +10,7 @@
 #define GRAPHICSINTERFACE_H_
 
 #include <GL/freeglut.h>
+#include <vector>
 
 class GraphicsInterface {
 
@@ -19,6 +20,8 @@ private:
 	int stageWidth;
 	int stageHeight;
 	std::vector<unsigned char> pixels;
+	int imageWidth;
+	int imageHeight;
 
 public:
 	static const int EXIT = 0;
@@ -68,8 +71,10 @@ public:
 		this->menuItemName.push_back(name);
 		this->menuItemId.push_back(id);
 	}
-	void drawImage(std::vector<unsigned char> pixels){
+	void drawImage(std::vector<unsigned char> pixels, int width, int height){
 		this->pixels = pixels;
+		this->imageWidth = width;
+		this->imageHeight = height;
 
 	}
 	void runGUI(){
@@ -84,7 +89,7 @@ public:
 
 		glRasterPos2i(0,0);
 
-		glDrawPixels(1024,768, GL_BGR, GL_UNSIGNED_BYTE, this->pixels.data());
+		glDrawPixels(this->imageWidth,this->imageHeight, GL_BGR, GL_UNSIGNED_BYTE, this->pixels.data());
 		glFinish();
 
 		glColor3f(0,0,0);

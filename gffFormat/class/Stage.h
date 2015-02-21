@@ -14,6 +14,7 @@
 #include <gtkmm-3.0/gtkmm/window.h>
 #include <gtkmm-3.0/gtkmm/application.h>
 #include <gtkmm-3.0/gtkmm/filefilter.h>
+#include <gtkmm-3.0/gtkmm/main.h>
 #include <gdk-pixbuf-2.0/gdk-pixbuf/gdk-pixbuf.h>
 
 #include "GffFormat.h"
@@ -312,6 +313,7 @@ private:
 		}
 		if(this->format == "gff"){
 			gff.saveGff(this->path.data());
+
 			cout<<"Zapisano"<<endl;
 		}
 	}

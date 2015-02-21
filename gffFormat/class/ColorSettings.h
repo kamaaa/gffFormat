@@ -23,7 +23,7 @@ public:
 
 	}
 
-	static std::vector<unsigned char> swapRedBlue(std::vector<unsigned char> bytes){
+	static std::vector<uint8_t> swapRedBlue(std::vector<uint8_t> bytes){
 		int length = bytes.size();
 		for(int i=0; i<length; i+=3){
 			std::swap(bytes[i],bytes[i+2]);
