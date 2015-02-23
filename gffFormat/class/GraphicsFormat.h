@@ -25,7 +25,7 @@ protected:
 	uint8_t bitsPerPixel;
 	uint32_t pixelOffset;
 
-	unsigned int pixelDataSize;
+	uint32_t pixelDataSize;
 	uint32_t fileSize;
 	uint32_t headerSize;
 	uint32_t imageSize;
@@ -36,7 +36,8 @@ protected:
 	std::string typeCompression;
 
 	std::vector<uint8_t> fileHeader;
-	std::vector<unsigned char> pixelsData;
+	std::vector<uint8_t> pixelsData;
+	std::vector<uint16_t> compressPixelData;
 	std::ifstream image;
 	std::ofstream saveImage;
 
@@ -45,8 +46,11 @@ protected:
 private:
 
 public:
-	std::vector<uint8_t> getPixels(){
+	std::vector<uint8_t> getRawPixels(){
 		return this->pixelsData;
+	}
+	std::vector<uint16_t> getCompressPixels(){
+		return this->compressPixelData;
 	}
 	std::string getColorspace(){
 		return this->colorSpace;
@@ -81,38 +85,46 @@ protected:
 		return rawData;
 	}
 
-	std::vector<uint8_t> loadPixels(int size, int offset){
-		std::vector<uint8_t> rawData;
+	void loadPixels(int size, int offset, bool compress){
 
 		if(!this->image.is_open()){
 			throw std::runtime_error("Plik nie zostal otwarty.");
 		}
 
-		rawData.resize(size);
-
 		this->image.seekg(offset, std::ios::beg);
-		this->image.read(reinterpret_cast<char*>(rawData.data()),size);
 
+		if(compress){
+			this->pixelsData.resize(size);
+			this->image.read(reinterpret_cast<char*>(this->pixelsData.data()),size);
+		}else{
+			this->compressPixelData.resize(size/2);
+			this->image.read(reinterpret_cast<char*>(this->compressPixelData.data()),size);
+		}
 		this->closeImage();
-		return rawData;
+
 	}
 
 	void compressData(){
-		this->pixelsData = lz.compress(this->pixelsData);
+		this->compressPixelData = lz.compress(this->pixelsData);
 		lz.clear();
 	}
 
 	void decompressData(){
-		this->pixelsData = lz.decompress(this->pixelsData);
+		this->pixelsData = lz.decompress(this->compressPixelData);
 		lz.clear();
 	}
 
-	void saveFile(const char* path){
+	void saveFile(const char* path, bool compress){
 		this->saveImage.open(path, std::ios::binary);
 
 		cout<<(int)this->imageSize<<endl;
 		this->saveImage.write(reinterpret_cast<char*>(this->fileHeader.data()), (int)this->headerSize);
-		this->saveImage.write(reinterpret_cast<char*>(this->pixelsData.data()), (int)this->imageSize);
+
+		if(!compress){
+			this->saveImage.write(reinterpret_cast<char*>(this->pixelsData.data()), (int)this->imageSize);
+		}else{
+			this->saveImage.write(reinterpret_cast<char*>(this->compressPixelData.data()), (int)this->imageSize);
+		}
 
 		if(this->saveImage.good()){
 			cout<<"ok"<<endl;

@@ -52,7 +52,7 @@ public:
 			this->pixelOffset = this->fileHeader[10] + (this->fileHeader[11]<<8);
 			this->pixelDataSize = ((this->imageWidth * this->bitsPerPixel + 31) / 32) * 4 * this->imageHeight;
 
-			this->pixelsData = this->loadPixels(this->pixelDataSize, this->pixelOffset);
+			this->loadPixels(this->pixelDataSize, this->pixelOffset, true);
 
 			std::cout<<this->pixelOffset<<std::endl;
 			std::cout<<this->pixelDataSize<<std::endl;
@@ -77,14 +77,14 @@ public:
 		cout<<"create header"<<endl;
 		this->createGffHeader();
 		cout<<"save file"<<endl;
-		this->saveFile(path);
+		this->saveFile(path, true);
 
 	}
 	void createGffHeader(){
 		this->fileHeader.clear();
 
 		this->headerSize = 35;
-		this->imageSize = this->pixelsData.size();
+		this->imageSize = this->compressPixelData.size()*2;
 		this->fileSize = this->imageSize + this->headerSize;
 		this->bitsPerPixel = 24;
 		this->pixelOffset = 35;

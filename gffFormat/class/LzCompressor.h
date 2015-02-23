@@ -17,25 +17,24 @@ using namespace std;
 
 class LzCompressor {
 private:
-	const unsigned short DICTIONARY_SIZE = 8191;
+	const unsigned short DICTIONARY_SIZE = 8192;
 	const unsigned short BUFFER_SIZE = 255;
 
 	unsigned int indexStartWindow;
 
 	vector <uint8_t> bytesData;
-	vector <uint8_t> compressData;
+	vector <uint16_t> compressData;
 
 public:
 	LzCompressor(){
 		this->indexStartWindow = 0;
 	}
 
-	vector<uint8_t> compress(vector<uint8_t> bytesData){
-		uint8_t offset = 0;
-		uint8_t matchLength = 0;
-		uint8_t currentByteValue = 0;
+	vector<uint16_t> compress(vector<uint8_t> bytesData){
+		uint16_t offset = 0;
+		uint16_t matchLength = 0;
+		uint16_t currentByteValue = 0;
 
-		vector<uint8_t> pattern;
 		this->bytesData = bytesData;
 
 		int matchPosition = 0;
@@ -49,15 +48,15 @@ public:
 			offset = 0;
 
 			// catch the color int value
-			currentByteValue = this->bytesData[currentByteIndex];
+			currentByteValue = (uint16_t)this->bytesData[currentByteIndex];
 
 			if(currentByteIndex == 0){
 				this->addCompressItem(0,0,currentByteValue);
-				//cout<<"<"<<(int)offset<<","<< (int)matchLength<<","<< (int)this->bytesData[currentByteIndex]<<">"<<endl;
+				cout<<"<"<<(int)offset<<","<< (int)matchLength<<","<< (int)this->bytesData[currentByteIndex]<<">"<<endl;
 			}else{
-				matchLength=1;
+				matchLength = 1;
 				matchPosition = this->findLastPosition(this->indexStartWindow, currentByteIndex, matchLength);
-				//cout<<"matchPosition: "<<matchPosition<<endl;
+
 				if(matchPosition != -1){
 					matchLength++;
 					while(matchLength < this->BUFFER_SIZE){
@@ -73,26 +72,23 @@ public:
 					matchPosition = this->findLastPosition(this->indexStartWindow, currentByteIndex, matchLength);
 					currentByteIndex += matchLength;
 					offset = (currentByteIndex < (this->DICTIONARY_SIZE + matchLength)) ? currentByteIndex - matchPosition - matchLength : this->DICTIONARY_SIZE - matchPosition;
-					//cout<<"<"<<(int)offset<<","<< (int)matchLength<<","<< (int)this->bytesData[currentByteIndex]<<">"<<endl;
-					this->addCompressItem(offset, matchLength, this->bytesData[currentByteIndex]);
+
+					this->addCompressItem(offset, matchLength, (uint8_t)this->bytesData[currentByteIndex]);
 				}else{
-					matchLength = 0;
-					offset=0;
 					this->addCompressItem(0,0,currentByteValue);
-					//cout<<"<"<<(int)offset<<","<< (int)matchLength<<","<< (int)this->bytesData[currentByteIndex]<<">"<<endl;
 				}
 			}
-			//cout<<"<"<<(int)offset<<","<< (int)matchLength<<","<< (int)this->bytesData[currentByteIndex]<<">"<<endl;
+
 			currentByteIndex++;
 		}
 
 		return this->compressData;
 	}
-	vector<uint8_t> decompress(vector<uint8_t> compressData){
+	vector<uint8_t> decompress(vector<uint16_t> compressData){
 		vector<uint8_t> rawData;
 		this->compressData = compressData;
 
-		unsigned int sizeCompresedData = compressData.size()-1;
+		unsigned int sizeCompresedData = this->compressData.size()-1;
 		unsigned int currentItemIndex = 0;
 		unsigned int matchLength = 0;
 		unsigned int offset = 0;
@@ -106,10 +102,8 @@ public:
 					rawData.push_back(rawData[offset]);
 					offset++;
 				}
-				rawData.push_back(this->compressData[currentItemIndex+2]);
-			}else{
-				rawData.push_back(this->compressData[currentItemIndex+2]);
 			}
+			rawData.push_back((uint8_t)this->compressData[currentItemIndex+2]);
 			currentItemIndex+=3;
 		}
 
@@ -136,7 +130,7 @@ private:
 		it = find_end(this->bytesData.begin()+start,this->bytesData.begin()+end, this->bytesData.begin()+end, this->bytesData.begin()+(end+patternLength));
 
 		if(it != this->bytesData.begin()+end){
-			position = it - (this->bytesData.begin()-start);
+			position = (it - this->bytesData.begin())-start;
 		}
 
 		return position;
@@ -186,7 +180,7 @@ private:
 		//cout<<"position: "<<position<<endl;
 		return position;
 	}
-	void addCompressItem(uint8_t offset, uint8_t length, uint8_t val){
+	void addCompressItem(uint16_t offset, uint16_t length, uint16_t val){
 		this->compressData.push_back(offset);
 		this->compressData.push_back(length);
 		this->compressData.push_back(val);

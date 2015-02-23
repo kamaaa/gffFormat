@@ -69,7 +69,7 @@ public:
 		this->checkMarkIcon = NULL;
 		this->colorSelected = 0;
 
-		this->saveItems.resize(3);
+		this->saveItems.resize(2);
 		this->colorItems.resize(5);
 		this->mainBox->show_all();
 		this->mainBox->add(*drawArea);
@@ -97,7 +97,7 @@ public:
 		this->window->set_position(Gtk::WIN_POS_CENTER);
 		this->window->set_icon_from_file("icon.png");
 
-		this->saveItems.resize(3);
+		this->saveItems.resize(2);
 		this->colorItems.resize(5);
 		this->mainBox->add(*this->drawArea);
 		this->mainBox->show_all();
@@ -146,26 +146,26 @@ private:
 		Gtk::Menu* fileSubMenu = this->addMenuCategory("Plik");
 
 		Gtk::MenuItem* openFile = Gtk::manage(new Gtk::MenuItem("_Otwórz plik", true));
-		Gtk::MenuItem* saveFile = Gtk::manage(new Gtk::MenuItem("_Zapisz", true));
+		//Gtk::MenuItem* saveFile = Gtk::manage(new Gtk::MenuItem("_Zapisz", true));
 		Gtk::MenuItem* saveFileAsBMP = Gtk::manage(new Gtk::MenuItem("_Zapisz jako BMP", true));
 		Gtk::MenuItem* saveFileAsGFF = Gtk::manage(new Gtk::MenuItem("_Zapisz jako GFF", true));
 		Gtk::MenuItem* closeProgram = Gtk::manage(new Gtk::MenuItem("_Zakończ", true));
 		Gtk::SeparatorMenuItem* closeSeparator = Gtk::manage(new Gtk::SeparatorMenuItem());
 
 		openFile->signal_activate().connect(sigc::mem_fun(*this, &Stage::openFileEvent));
-		saveFile->signal_activate().connect(sigc::mem_fun(*this, &Stage::saveFileEvent));
+		//saveFile->signal_activate().connect(sigc::mem_fun(*this, &Stage::saveFileEvent));
 		saveFileAsBMP->signal_activate().connect(sigc::bind<string>(sigc::mem_fun(*this, &Stage::saveFileAsEvent),"bmp"));
 		saveFileAsGFF->signal_activate().connect(sigc::bind<string>(sigc::mem_fun(*this, &Stage::saveFileAsEvent),"gff"));
 		closeProgram->signal_activate().connect(sigc::ptr_fun(&Gtk::Main::quit));
 
-		this->saveItems[0] = saveFile;
-		this->saveItems[1] = saveFileAsBMP;
-		this->saveItems[2] = saveFileAsGFF;
+		//this->saveItems[0] = saveFile;
+		this->saveItems[0] = saveFileAsBMP;
+		this->saveItems[1] = saveFileAsGFF;
 
 		this->enableSaveButtons(false);
 
 		fileSubMenu->append(*openFile);
-		fileSubMenu->append(*saveFile);
+		//fileSubMenu->append(*saveFile);
 		fileSubMenu->append(*saveFileAsBMP);
 		fileSubMenu->append(*saveFileAsGFF);
 		fileSubMenu->append(*closeSeparator);
@@ -313,8 +313,8 @@ private:
 		}
 		if(this->format == "gff"){
 			gff.saveGff(this->path.data());
-
-			cout<<"Zapisano"<<endl;
+		}else if(this->format == "bmp"){
+			bmp.saveBmp(this->path.data());
 		}
 	}
 	void saveFileAsEvent(string type){
@@ -340,11 +340,12 @@ private:
 				this->format = this->path.substr(this->path.length()-3,3);
 
 				if(this->format != type){
-					this->format = "gff";
+					this->format = type;
 					this->path += "." + type;
 				}
 				cout << "File selected: " <<  this->path << endl;
 
+				this->saveFileEvent();
 				break;
 			}
 
@@ -359,8 +360,6 @@ private:
 				break;
 
 		}
-
-		this->saveFileEvent();
 	}
 	void enableSaveButtons(bool state){
 		for(int i=0; i<(int)this->saveItems.size(); i++){
@@ -374,6 +373,7 @@ private:
 		int imageHeight = gff.getHeight();
 
 		this->setActiveColorSpace(ColorSettings::BGR);
+		this->saveItems[0]->set_sensitive(false);
 
 		if(imageHeight > this->screenHeight){
 			this->scaleWindow(false, imageWidth, imageHeight);
@@ -384,7 +384,7 @@ private:
 			drawArea->scaleImage(false);
 		}
 
-		drawArea->setPixels(gff.getPixels(), "bmp", ColorSettings::BGR);
+		drawArea->setPixels(gff.getRawPixels(), "bmp", ColorSettings::BGR);
 		drawArea->setImageResolution(imageWidth, imageHeight);
 
 		drawArea->show();
@@ -397,6 +397,7 @@ private:
 		int imageHeight = bmp.getHeight();
 
 		string colorspace = bmp.getColorspace();
+		this->saveItems[1]->set_sensitive(false);
 
 		if(colorspace == "HSL"){
 			this->setActiveColorSpace(ColorSettings::HSL);
@@ -417,7 +418,7 @@ private:
 			drawArea->scaleImage(false);
 		}
 
-		drawArea->setPixels(bmp.getPixels(), "gff", this->colorSelected);
+		drawArea->setPixels(bmp.getRawPixels(), "gff", this->colorSelected);
 		drawArea->setImageResolution(imageWidth, imageHeight);
 
 		drawArea->show();
